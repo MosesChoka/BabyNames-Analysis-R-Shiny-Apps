@@ -1,0 +1,166 @@
+---
+title: "Data-Analysis"
+author: "Moses Choka"
+date: "4/6/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Problem 1 - House Price Prediction**
+
+i) Importing the dataset
+
+```{r}
+library(readr)
+MountPleasantRealEstateData <- read_csv("MountPleasantRealEstateData.csv")
+head(MountPleasantRealEstateData, n=10)
+```
+
+i) Removing columns that are not necessary for the analysis by selecting the relevant ones
+
+```{r}
+library(tidyverse)
+data1<- MountPleasantRealEstateData %>%
+  select("List.Price","Bedrooms","Baths","Square.Footage","Year.Built","Acreage","Fireplace")
+head(data1)
+```
+
+**Problem1- Part1; Scatter Plot matrix of all the relevant variables**
+
+```{r}
+plot_matrix <- select(data1, -Fireplace)
+upper.panel<-function(x, y){
+  points(x,y, pch=19, col=c("red", "green3", "blue")[iris$Species])
+  r <- round(cor(x, y), digits=2)
+  txt <- paste0("R = ", r)
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  text(0.5, 0.9, txt)
+}
+pairs(plot_matrix,lower.panel = NULL, upper.panel = upper.panel )
+```
+
+There exists a positive association between house price and the number of bedrooms, baths, square footage, and acreage. However, there exists a negative association between house price and the year the house was built.
+
+## **Problem1- Part2; Fitting a Multiple Regression Model**
+
+```{r}
+model1<- lm(List.Price~ Bedrooms + Baths + Square.Footage + Year.Built + Acreage + Fireplace, 
+            data = data1 )
+summary(model1)
+```
+
+
+**Problem1- Part2; Model1 assumption check**
+
+```{r}
+par(mfrow=c(2,2))
+plot(model1)
+```
+
+Yes there is a violation of the linear regression assumption, this can be seen in the diagnostic plots. For example in the assumption of normality, the residuals are not normal as there are some points lying outside the tail ends of the line in the plot. Also in the residual vs leverage plot, there are some points lying outside the Cook's distance, hence there exists outliers.
+
+**Problem1- Part3; Using Box-Cox Transformation**
+
+```{r}
+library(MASS)
+bc <- boxcox(model1)
+best_lambda <- bc$x[which(bc$y==max(bc$y))]
+best_lambda
+```
+**Problem1- Part4; Model2 with a transformed response variable**
+
+```{r}
+model2<- lm((List.Price) ^ 0.06 ~ Bedrooms + Baths + Square.Footage + Year.Built + Acreage + Fireplace, data = data1 )
+summary(model2)
+```
+**Problem1- Part4; Model2 Assumptions diagnostics**
+
+```{r}
+par(mfrow=c(2,2))
+plot(model2)
+```
+**Problem1- Part5**
+Yes it does make sense to do a transformation, most of the homoscedacity assumption is now fullfilled looking at the diagnostics plots, and also the R-Squared value have moved from 80% to 86% indicating that the model1 is fit in predicting the listing prices as compared to model1
+
+The F-test statistics value for model2 is 246.4, the degrees of freedom is 238 and the p-value is <2.2e - 16 . The model is significant in predicting the selling price as it has a p-value less than 0.05.
+
+**Problem1- Part6**
+The significant predictors in model2 are Baths, Square.Footage, Year.Built, Acreage, and Fireplace. The number of bedrooms is an insignificant predictor in the second model even though it had a clear association with the response variable based on the scatterplot in part 2, this could be because the data was transformed in the second model.
+
+
+##**Problem Two**
+```{r}
+ratlethargy <- read_csv("ratlethargy.csv")
+ratlethargy$dose<-as.factor(ratlethargy$dose)
+#ratlethargy$dose = factor(ratlethargy$dose,labels = c("A","B","C", "D"))
+head(ratlethargy)
+
+```
+
+**Problem2 - Part1(ANOVA TEST)**
+```{r}
+model3 = lm(resttime ~ dose, data = ratlethargy)
+anova(model3)
+```
+ANOVA Assumptions
+
+```{r}
+par(mfrow=c(2,2))
+plot(model3)
+```
+i) All samples are independent, and collected in >2 independent categorical groups; this assumption is satisfied as there are 4 types of doses issued, I labeled them as A, B, C, and D.
+
+ii) Assumption 2: Dependent variable is continuous - assumption satisfied, resttime is the dependent variable for this case and it is continous.
+
+iii) The different groups are normally distributed.
+
+iv) Assumption 4: Homogeneneity of variances
+
+**Problem2- Part 2 (Scatterplot of resttime vs. age)**
+
+Scatterplot of resttime vs age
+
+```{r}
+ggplot(data= ratlethargy, aes(x=age, y=resttime, color=dose)) + geom_point() + 
+  geom_smooth(method='lm', se=FALSE)
+```
+As the age of the rat increases the resttime value also increases. It is also evident that the drug dosage has an effect on the induction of the lethargy, 30mg dose had the highest lethargy induction as compared to the other doses.
+
+**Problem2- Part3;ANCOVA test with the rats' age as the control effect**
+
+````{r}
+interaction_model <- lm(resttime~age*dose, data = ratlethargy)
+anova(interaction_model)
+```
+
+
+Assumptions test
+
+```{r}
+par(mfrow=c(2,2))
+plot(interaction_model)
+```
+The source of assumption problem in part1 is the use of one independent categorical variable without interaction and an effect independent variable.
+
+**Problem2- Part4; Reporting F-test for reduced model **
+
+```{r}
+reduced_model <- lm(resttime~age+dose, data = ratlethargy)
+anova(interaction_model, reduced_model)
+```
+The F-statistics value is obtained as 84.339 and the degrees of freedom for the full mdel with interaction is 52 and 55 for the reduced model. The p-value is obtained equal to < 2.2e-16. Since the p-value is less than 0.05, it can be concluded that the effect of dosage and induction depends on the rat's age.
+
+**Problem2- Part5**
+The effect of dosage on induction lethargy depends on age, this is evident as in the comparison of the two models, one with interaction and the reduced model yields a p-value less than 0.05, the complicating issue would be on deciding the most appropriate model to proving the statement.
+
+**Problem2- Part6 **
+```{r}
+mod<- lm(resttime~age + dose, data= ratlethargy)
+#prediction
+predict(mod,data.frame(age=11,dose=as.factor(10)))
+predict(mod,data.frame(age=11,dose=as.factor(30)))
+```
