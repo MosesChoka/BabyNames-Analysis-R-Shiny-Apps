@@ -1,0 +1,26 @@
+{
+    "id": "F63B0D37",
+    "path": "~/Shiny-APPS/interactive_tables.R",
+    "project_path": "interactive_tables.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1676840537479.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "27,40",
+        "scrollLine": "18"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1676837371,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1676837371,
+    "read_only": false,
+    "read_only_alternatives": []
+}
