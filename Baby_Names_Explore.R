@@ -4,9 +4,11 @@ library(dplyr)
 library(DT)
 library(plotly)
 library(babynames)
+library(shinythemes)
 
 ui <- fluidPage(
   titlePanel('Insights about Baby Names in the US - with Interactive Graph and Table'),
+  theme = shinythemes::shinytheme('journal'),
   sidebarLayout(
     sidebarPanel(
       textInput('name','Enter Name:','Dave'),
@@ -30,9 +32,11 @@ ui <- fluidPage(
 server <- function(input, output, session){
   output$trendy_names_plot <- renderPlot({
     data_name <- subset(babynames, name == input$name)
+    data_name1 <- data_name %>%
+      filter(year >= 2000)
     
     
-    ggplot(data_name) + geom_line(aes(x = year, y = prop, color = sex ))
+    ggplot(data_name1) + geom_line(aes(x = year, y = prop, color = sex ))
     
   })
     
