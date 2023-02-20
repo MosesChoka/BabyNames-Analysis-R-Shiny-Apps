@@ -4,12 +4,13 @@ library(dplyr)
 library(DT)
 library(plotly)
 library(babynames)
+
 ui <- fluidPage(
-  titlePanel('Insights about Baby Names in the US - with Interactive Graphs'),
+  titlePanel('Insights about Baby Names in the US - with Interactive Graph and Table'),
   sidebarLayout(
     sidebarPanel(
-      
-      selectInput('sex','Enter Sex',selected = 'M', choices = c('M','F')),
+      textInput('name','Enter Name:','Dave'),
+      selectInput('sex', 'Enter Person Sex', selected = 'M', choices = c('M','F')),
       sliderInput('year','Pick a range', value = 2010, min = 2010, max = 2017)
     ),
     mainPanel(
@@ -18,36 +19,38 @@ ui <- fluidPage(
           DT::DTOutput("trend1")
         ),
         tabPanel('Plot',
-          plotly::plotlyOutput("trendy_names_plot")
+          plotOutput("trendy_names_plot")
         )
       )
     )
   )
 )
 
+
 server <- function(input, output, session){
-  data_name <- function(){
-    babynames %>%
-    filter(sex == input$sex) %>%
-    filter(year == input$year) %>%
-    ggplot(aes(x = year, y = p, color = "sex" )) +
-    geom_line()}
-  
+  output$trendy_names_plot <- renderPlot({
+    data_name <- subset(babynames, name == input$name)
+    
+    
+    ggplot(data_name) + geom_line(aes(x = year, y = prop, color = sex ))
+    
+  })
+    
   table_data <- function()
     {babynames %>%
+      filter(sex == input$sex) %>%
       filter(year == input$year) %>%
-      dplyr::slice_sample(prop = .1) %>%
-      DT::datatable()
-  }
+      slice_max(prop, n = 10) %>%
+      DT::datatable()}
   
-  output$trendy_names_plot <- renderPlotly({
-    data_name()
-  })
+  #output$trendy_names_plot <- renderPlot({
+    #data_name()
+  #})
   
   output$trend1 <- DT::renderDT({
     table_data()
   })
-  
 }
+  
 
 shinyApp(ui = ui, server = server)
